@@ -10,8 +10,8 @@ from itertools import product
 #source: https://textfiles.vistech.net/news/
 
 MAX_ITERATIONS = 10
-INITIAL_WINDOWS = 5
-MIN_COHESION_IN_WINDOW = 0.60
+INITIAL_WINDOWS = 2
+MIN_COHESION_IN_WINDOW = 0.9
 
 STOP_WORDS = set(stopwords.words('english'))
 LEMMATIZER = WordNetLemmatizer()
@@ -36,20 +36,6 @@ def readDoc():
         tokens.append(filtered_tokens)
     return sentences, tokens
 
-def calculateFrequencies(sentences,tokens):
-    """
-    It return a list of dict where list[i] = <token,frequency> for each sentence
-    """
-    list_of_dicts = []
-    index = 0
-    while index < len(sentences):
-        words_aggregated_dict = defaultdict(int)
-        for sublist in tokens[index]:
-            for word in sublist:
-                words_aggregated_dict[word] += 1
-        index+=1
-        list_of_dicts.append(words_aggregated_dict)
-    return list_of_dicts
 
 def calculateWindows(sentences,initial_windows_size):
     """
@@ -75,10 +61,11 @@ def calculateCohesion(window):
     breakpoint = 0
     min_similarity = 100000000
     while index2 < len(window):
-
+        #calcolo tutti i possibili synset per le parole delle frasi window[index1] e window[index2]
         allsyns1 = set(ss for word in window[index1] for ss in wn.synsets(word))
         allsyns2 = set(ss for word in window[index2] for ss in wn.synsets(word))
-        if len(allsyns1) > 0 and len(allsyns2)>0:    
+        if len(allsyns1) > 0 and len(allsyns2)>0:   
+            #calcolo max wup similarity tra ogni coppia di synset  
             best, syn1, syn2 = max((wn.wup_similarity(s1, s2) or 0, s1, s2) for s1, s2 in product(allsyns1, allsyns2))
 
             avg_similarity += best
@@ -120,11 +107,12 @@ def main():
     sentences, tokens = readDoc()
     print("There are ",len(sentences), "sentences")
 
-    #conto in ogni frase la frequenza delle parole
-    #frequencies = calculateFrequencies(sentences,tokens)
 
     #inizialmente splitto le finestre mettendo lo stesso numero di frasi
     initial_windows_size = len(sentences)//INITIAL_WINDOWS
+    if initial_windows_size > 7:
+        initial_windows_size -= 5
+    
     windows = calculateWindows(tokens,initial_windows_size)
     filtered_windows = []
     for window in windows:
@@ -133,9 +121,11 @@ def main():
     print("INITIAL WINDOWS")
     baseline = 0
     for initial_window in windows:
+        #print("len:",len(initial_window))
         print(len(initial_window)+baseline)
         baseline += len(initial_window)
 
+    ### INIZIO A ITERARE ###
 
     iteration = 0
     changes = 1
@@ -148,15 +138,15 @@ def main():
         for window in windows:
             #calcolo coesione media di ogni coppia di frasi e il miglior breakpoint(la coppia con coesione più bassa)
             cohesion_avg, best_breakpoint = calculateCohesion(window)
-
-            if cohesion_avg < actual_cohesion_threshold:
+            #print("cohesion avg: ",cohesion_avg)
+            if cohesion_avg < actual_cohesion_threshold and len(window) > 2:
                 print("Found break point at window ",index," at sentence",best_breakpoint," with an avg cohesion of ",cohesion_avg)
                 changes+=1
-                actual_cohesion_threshold = actual_cohesion_threshold*0.7 #diminuisco la coesione minima all'aumentare delle window
+                actual_cohesion_threshold = actual_cohesion_threshold*0.96 #diminuisco la coesione minima all'aumentare delle window
                 #print("LEN BEFORE: ",len(newWindows))
                 #splitta in due la window
                 newWindows = splitWindow(newWindows,best_breakpoint, index)
-                #break
+                
                 #print("LEN AFTER: ",len(newWindows))
             index+=1
         windows = newWindows
@@ -165,7 +155,7 @@ def main():
     baseline = 0
     print("Converged after ", iteration, "iterations")
     for final_window in newWindows:
-        print("===================================== ", len(final_window)+baseline)
+        print("===================================== Finish at sentence row: ", len(final_window)+baseline)
         print(final_window)
         print("===================================== SIZE: ",len(final_window),"\n")
         baseline += len(final_window)

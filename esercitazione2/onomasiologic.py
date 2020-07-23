@@ -17,52 +17,6 @@ def computeSimilarity(first, second):
 
 ''' ############ word disambiguation functions ###############'''
 
-def leskAlgoHyperonims(synset,contextList):
-    """
-    Ritorna l'iperonimo più simile al contesto dato in input
-    """
-    besthyper = None
-    max_overlap = -1
-    for hyper in synset.hypernyms():
-        #print("POS HYP= ",hyponim.pos())
-        if hyper.pos() != 'n':
-            continue
-        signature = extract_sense_context(hyper, True)
-        overlap = computeoverlap(signature,contextList)
-        if overlap > max_overlap:
-            max_overlap = overlap
-            besthyper = hyper
-    return besthyper
-
-def leskAlgoHyponims(word,sentence):
-    """
-    Ritorna l'iponimo più simile al più simile wordsense data la parola e la sentence che funge da contesto di disambiguazione
-    """
-    best_sense = None
-    context = computecontext(sentence)
-    max_overlap = -1
-    for sense in wn.synsets(word):
-        signature = extract_sense_context(sense)
-        overlap = computeoverlap(signature,context)
-        if overlap > max_overlap:
-            max_overlap = overlap
-            best_sense = sense
-
-    if best_sense is None:
-        return None
-    
-    max_overlap = -1
-    besthyponim = None
-    for hyponim in best_sense.hyponyms():
-        #print("POS HYP= ",hyponim.pos())
-        if hyponim.pos() != 'n':
-            continue
-        signature = extract_sense_context(hyponim)
-        overlap = computeoverlap(signature,context)
-        if overlap > max_overlap:
-            max_overlap = overlap
-            besthyponim = hyponim
-    return besthyponim
 
 def leskAlgo(word,sentence):
     best_sense = None
@@ -128,6 +82,7 @@ def findBestSynset(words_aggregated_dict):
         if min([len(path) for path in synset_word.hypernym_paths()]) < 8:
             continue
         word_synsets[synset_word] = frequency
+        #estendo il concetto originale (dato dalle parole nelle definizioni) con il contesto trovato per ogni synset di ogni termine
         context_original.extend(extract_sense_context(synset_word, True))
 
 
@@ -162,8 +117,7 @@ def findBestSynset(words_aggregated_dict):
     best_sim = -1
     for hyponim in hyponims_candidates:
         context_hyponim = extract_sense_context(hyponim, False)
-        #similarity, maxSim = computeSimilarity(hyponim,word_synsets.keys())
-        #similarity = similarity + maxSim/2
+
         similarity = computeoverlap(context,context_hyponim)#/max(len(context),len(context_hyponim))
         if similarity > best_sim:
             print("similarity change: ", similarity)
@@ -186,41 +140,6 @@ def computeSimilarity(synset,listSynset):
     
     return similarity/len(listSynset),max_sym
 
-def compareHyponimWithHyperonimContext(words_aggregated_dict,hyper_context):
-    """
-    Extracts best hyponim context from each term in words_aggregated
-    and compute a similarity overlap between all hyponims contexts and the hyper_context.
-    It returns the average similarity.
-    """
-    similarity = 0
-    count = 0
-    best_hyponim = None #best synset that is an hyponim of a words_aggregated
-    max_sim = 0
-    keysList = list(words_aggregated_dict.keys())
-    #keysList.extend(hyper_context)
-    for word, frequency in words_aggregated_dict.items():
-        synset_word = wn.synsets(word)
-        if len(synset_word) == 0:
-            continue
-        
-        #word disambiguation
-        synset_word_hyponim = leskAlgoHyponims(word,keysList)
-        if synset_word_hyponim is None:
-            continue
-        hyponim_context = extract_sense_context(synset_word_hyponim)
-        #print("Hyponim context len: ",len(hyponim_context))
-        merged = []
-        #merged.extend(hyper_context)
-        merged.extend(keysList)
-        similarity_this = computeSimilarity(hyponim_context,merged)
-        similarity += similarity_this
-        if similarity_this > max_sim:
-            max_sim = similarity_this
-            best_hyponim = synset_word_hyponim
-            #print("best_hyponim CHANGE: ",best_hyponim," with similarity: ",similarity_this)
-        count+=1
-    #print(similarity,"-------",count)
-    return similarity/count, best_hyponim
 
 def main():
     #read csv and transponse it
@@ -243,6 +162,7 @@ def main():
     i = 0
     for concept_tokens in all_concepts:
         #concept_tokens is a list of list of tokens. Each sublist is a single definition
+        #words_aggrefated_dict has content: word, frequency
         words_aggregated_dict = defaultdict(int)
         for sublist in concept_tokens:
             for word in sublist:
