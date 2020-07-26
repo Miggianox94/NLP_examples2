@@ -69,7 +69,7 @@ def findBestSynset(words_aggregated_dict):
     """
     #trovo contesto
     context = list(words_aggregated_dict.keys())
-    context_original = context.copy()
+
     word_synsets = {}
     #print("DICT: ",words_aggregated_dict.items())
     for word, frequency in words_aggregated_dict.items():
@@ -79,11 +79,11 @@ def findBestSynset(words_aggregated_dict):
             continue
         #print("distance from root: ",min([len(path) for path in synset_word.hypernym_paths()]))
         #se il synset trovato è troppo "generico" allora lo scarto
+        #hypernym_paths() -> https://www.nltk.org/api/nltk.corpus.reader.html#nltk.corpus.reader.wordnet.Synset.hypernym_paths
         if min([len(path) for path in synset_word.hypernym_paths()]) < 8:
             continue
         word_synsets[synset_word] = frequency
-        #estendo il concetto originale (dato dalle parole nelle definizioni) con il contesto trovato per ogni synset di ogni termine
-        context_original.extend(extract_sense_context(synset_word, True))
+
 
 
 
@@ -120,7 +120,7 @@ def findBestSynset(words_aggregated_dict):
 
         similarity = computeoverlap(context,context_hyponim)#/max(len(context),len(context_hyponim))
         if similarity > best_sim:
-            print("similarity change: ", similarity)
+            #print("similarity change: ", similarity)
             best_sim = similarity
             best_hyponim = hyponim
     return best_hyponim
@@ -179,5 +179,9 @@ def main():
 
 
 if __name__ == "__main__":
+    """
+    In questa esercitazione l’obiettivo è quello di identificare il concetto a partire da un insieme di definizioni.
+    """
+    
     #I concetti corretti sono: politics, justice, greed, patience, food, vehicle, screw, radiator
     main()

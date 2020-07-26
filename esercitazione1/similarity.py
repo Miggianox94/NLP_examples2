@@ -13,6 +13,10 @@ def computeSimilarity(first, second):
     return len(set(first).intersection(set(second)))/min(len(first),len(second))
 
 def main():
+    """
+    Questa esercitazione prevede il calcolo di similarità tra le definizioni date per 4 concetti mostrati a lezione
+    """
+    
     #read csv
     df = pd.read_csv('definizioni.csv')
     #print(df)

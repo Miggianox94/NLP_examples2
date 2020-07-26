@@ -159,6 +159,10 @@ def main():
 
 
 if __name__ == "__main__":
+    """
+    In questa esercitazione si vogliono sperimentare i principi della teoria di Hanks 
+    e quindi si cerca di calcolare delle frequenze di supersensi WordNet dato un corpus e scelto un verbo e una valenza.
+    """
     #verbo scelto: COSTRUIRE
     #nltk.download('brown')
     #nltk.download('universal_tagset')

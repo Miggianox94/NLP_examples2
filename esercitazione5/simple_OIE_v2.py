@@ -72,4 +72,8 @@ def extract_svo(doc,nlp):
     return " ".join(sub).strip().lower(), " ".join(ve).strip().lower(), " ".join(at).strip().lower()
 
 if __name__ == "__main__":
+    """
+    In questa esercitazione ho implementato un semplice esempio di applicazione 
+    della tecnica dell’Open Information Extraction su un testo preso da Wikipedia.
+    """
     main()

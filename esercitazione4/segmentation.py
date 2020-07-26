@@ -163,4 +163,8 @@ def main():
 
 
 if __name__ == "__main__":
+    """
+    In questa esercitazione l’obiettivo è fornire un’implementazione di un algoritmo 
+    di segmentazione valido per un testo qualsiasi in modo da individuare i “cambi di contesto” in modo soddisfacente.
+    """
     main()
